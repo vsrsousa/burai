@@ -49,6 +49,10 @@ public class SSHJob {
 
     private static final String DUMMY_INP_NAME = "__INP_NAME__";
 
+    private static final int CONNECTION_TIMEOUT_MS = 30000;
+    private static final int BUFFER_SIZE = 1024;
+    private static final int COMMAND_POLLING_INTERVAL_MS = 100;
+
     private Project project;
 
     private SSHServer sshServer;
@@ -139,10 +143,8 @@ public class SSHJob {
             return false;
         }
 
-        boolean connected = false;
         try {
-            connected = this.connectSSH();
-            if (!connected) {
+            if (!this.connectSSH()) {
                 System.err.println("Failed to connect to SSH server");
                 return false;
             }
@@ -565,12 +567,15 @@ public class SSHJob {
 
             // Configure session
             java.util.Properties config = new java.util.Properties();
+            // WARNING: StrictHostKeyChecking is disabled for convenience.
+            // This makes the connection vulnerable to man-in-the-middle attacks.
+            // In production, implement proper host key verification.
             config.put("StrictHostKeyChecking", "no");
             this.session.setConfig(config);
 
             // Connect
             System.out.println("Connecting to " + user + "@" + host + ":" + port);
-            this.session.connect(30000); // 30 seconds timeout
+            this.session.connect(CONNECTION_TIMEOUT_MS);
 
             // Open SFTP channel
             Channel channel = this.session.openChannel("sftp");
@@ -642,19 +647,19 @@ public class SSHJob {
             execChannel.connect();
 
             // Read output
-            byte[] buffer = new byte[1024];
+            byte[] buffer = new byte[BUFFER_SIZE];
             StringBuilder output = new StringBuilder();
             StringBuilder errorOutput = new StringBuilder();
 
             while (true) {
                 while (in.available() > 0) {
-                    int bytesRead = in.read(buffer, 0, 1024);
+                    int bytesRead = in.read(buffer, 0, BUFFER_SIZE);
                     if (bytesRead < 0) break;
                     output.append(new String(buffer, 0, bytesRead));
                 }
 
                 while (err.available() > 0) {
-                    int bytesRead = err.read(buffer, 0, 1024);
+                    int bytesRead = err.read(buffer, 0, BUFFER_SIZE);
                     if (bytesRead < 0) break;
                     errorOutput.append(new String(buffer, 0, bytesRead));
                 }
@@ -665,7 +670,7 @@ public class SSHJob {
                 }
 
                 try {
-                    Thread.sleep(100);
+                    Thread.sleep(COMMAND_POLLING_INTERVAL_MS);
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
                     break;
