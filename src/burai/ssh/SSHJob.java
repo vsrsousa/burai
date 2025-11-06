@@ -18,13 +18,23 @@ package burai.ssh;
 
 import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+
+import com.jcraft.jsch.Channel;
+import com.jcraft.jsch.ChannelExec;
+import com.jcraft.jsch.ChannelSftp;
+import com.jcraft.jsch.JSch;
+import com.jcraft.jsch.JSchException;
+import com.jcraft.jsch.Session;
+import com.jcraft.jsch.SftpException;
 
 import burai.com.file.FileTools;
 import burai.input.QEInput;
@@ -55,6 +65,10 @@ public class SSHJob {
 
     private Set<File> pseudoFiles;
 
+    private Session session;
+
+    private ChannelSftp sftpChannel;
+
     public SSHJob(Project project, SSHServer sshServer) {
         if (project == null) {
             throw new IllegalArgumentException("project is null.");
@@ -75,6 +89,9 @@ public class SSHJob {
         this.scriptFile = null;
         this.inpFiles = null;
         this.pseudoFiles = null;
+
+        this.session = null;
+        this.sftpChannel = null;
     }
 
     public Project getProject() {
@@ -122,27 +139,50 @@ public class SSHJob {
             return false;
         }
 
-        this.ftpFile(this.scriptFile);
+        boolean connected = false;
+        try {
+            connected = this.connectSSH();
+            if (!connected) {
+                System.err.println("Failed to connect to SSH server");
+                return false;
+            }
 
-        if (this.inpFiles != null) {
-            for (File inpFile : this.inpFiles) {
-                if (inpFile != null) {
-                    this.ftpFile(inpFile);
+            this.ftpFile(this.scriptFile);
+
+            if (this.inpFiles != null) {
+                for (File inpFile : this.inpFiles) {
+                    if (inpFile != null) {
+                        this.ftpFile(inpFile);
+                    }
                 }
             }
-        }
 
-        if (this.pseudoFiles != null) {
-            for (File pseudoFile : this.pseudoFiles) {
-                if (pseudoFile != null) {
-                    this.ftpFile(pseudoFile);
+            if (this.pseudoFiles != null) {
+                for (File pseudoFile : this.pseudoFiles) {
+                    if (pseudoFile != null) {
+                        this.ftpFile(pseudoFile);
+                    }
                 }
             }
+
+            // Execute the job script on the remote server
+            String jobCommand = this.sshServer.getJobCommand(this.scriptFile.getName());
+            boolean jobSubmitted = this.executeRemoteCommand(jobCommand);
+            
+            if (!jobSubmitted) {
+                System.err.println("Failed to submit job to remote server");
+                return false;
+            }
+
+            return true;
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+
+        } finally {
+            this.disconnectSSH();
         }
-
-        // TODO
-
-        return true;
     }
 
     private void ftpFile(File file) {
@@ -159,7 +199,24 @@ public class SSHJob {
             return;
         }
 
-        // TODO
+        if (this.sftpChannel == null) {
+            System.err.println("SFTP channel is not connected");
+            return;
+        }
+
+        try {
+            String remoteFileName = file.getName();
+            
+            // Upload the file using SFTP
+            try (FileInputStream fis = new FileInputStream(file)) {
+                this.sftpChannel.put(fis, remoteFileName);
+                System.out.println("Uploaded file: " + remoteFileName);
+            }
+
+        } catch (SftpException | IOException e) {
+            System.err.println("Failed to upload file: " + file.getName());
+            e.printStackTrace();
+        }
     }
 
     private void setupFiles() {
@@ -457,6 +514,190 @@ public class SSHJob {
 
         } catch (Exception e) {
             e.printStackTrace();
+        }
+    }
+
+    /**
+     * Establishes SSH connection to the remote server.
+     * Supports both password and private key authentication.
+     * 
+     * @return true if connection is successful, false otherwise
+     */
+    private boolean connectSSH() {
+        String host = this.sshServer.getHost();
+        int port = this.sshServer.intPort();
+        String user = this.sshServer.getUser();
+        String password = this.sshServer.getPassword();
+        String keyPath = this.sshServer.getKeyPath();
+
+        if (host == null || host.isEmpty()) {
+            System.err.println("SSH host is not specified");
+            return false;
+        }
+
+        if (user == null || user.isEmpty()) {
+            System.err.println("SSH user is not specified");
+            return false;
+        }
+
+        try {
+            JSch jsch = new JSch();
+
+            // Add private key if specified
+            if (keyPath != null && !keyPath.isEmpty()) {
+                File keyFile = new File(keyPath);
+                if (keyFile.exists() && keyFile.isFile()) {
+                    jsch.addIdentity(keyPath);
+                    System.out.println("Using private key: " + keyPath);
+                } else {
+                    System.err.println("Private key file not found: " + keyPath);
+                    return false;
+                }
+            }
+
+            // Create session
+            this.session = jsch.getSession(user, host, port);
+
+            // Set password if provided and no key is used
+            if (password != null && !password.isEmpty()) {
+                this.session.setPassword(password);
+            }
+
+            // Configure session
+            java.util.Properties config = new java.util.Properties();
+            config.put("StrictHostKeyChecking", "no");
+            this.session.setConfig(config);
+
+            // Connect
+            System.out.println("Connecting to " + user + "@" + host + ":" + port);
+            this.session.connect(30000); // 30 seconds timeout
+
+            // Open SFTP channel
+            Channel channel = this.session.openChannel("sftp");
+            channel.connect();
+            this.sftpChannel = (ChannelSftp) channel;
+
+            System.out.println("SSH connection established successfully");
+            return true;
+
+        } catch (JSchException e) {
+            System.err.println("Failed to establish SSH connection: " + e.getMessage());
+            e.printStackTrace();
+            this.disconnectSSH();
+            return false;
+        }
+    }
+
+    /**
+     * Disconnects from the SSH server and cleans up resources.
+     */
+    private void disconnectSSH() {
+        if (this.sftpChannel != null) {
+            try {
+                this.sftpChannel.disconnect();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            this.sftpChannel = null;
+        }
+
+        if (this.session != null) {
+            try {
+                this.session.disconnect();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            this.session = null;
+        }
+
+        System.out.println("SSH connection closed");
+    }
+
+    /**
+     * Executes a command on the remote server.
+     * 
+     * @param command The command to execute
+     * @return true if command executed successfully, false otherwise
+     */
+    private boolean executeRemoteCommand(String command) {
+        if (command == null || command.isEmpty()) {
+            System.err.println("Command is empty");
+            return false;
+        }
+
+        if (this.session == null || !this.session.isConnected()) {
+            System.err.println("SSH session is not connected");
+            return false;
+        }
+
+        ChannelExec execChannel = null;
+        try {
+            execChannel = (ChannelExec) this.session.openChannel("exec");
+            execChannel.setCommand(command);
+
+            // Get the output stream to capture command output
+            InputStream in = execChannel.getInputStream();
+            InputStream err = execChannel.getErrStream();
+
+            execChannel.connect();
+
+            // Read output
+            byte[] buffer = new byte[1024];
+            StringBuilder output = new StringBuilder();
+            StringBuilder errorOutput = new StringBuilder();
+
+            while (true) {
+                while (in.available() > 0) {
+                    int bytesRead = in.read(buffer, 0, 1024);
+                    if (bytesRead < 0) break;
+                    output.append(new String(buffer, 0, bytesRead));
+                }
+
+                while (err.available() > 0) {
+                    int bytesRead = err.read(buffer, 0, 1024);
+                    if (bytesRead < 0) break;
+                    errorOutput.append(new String(buffer, 0, bytesRead));
+                }
+
+                if (execChannel.isClosed()) {
+                    if (in.available() > 0 || err.available() > 0) continue;
+                    break;
+                }
+
+                try {
+                    Thread.sleep(100);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    break;
+                }
+            }
+
+            int exitStatus = execChannel.getExitStatus();
+
+            if (output.length() > 0) {
+                System.out.println("Command output: " + output.toString());
+            }
+
+            if (errorOutput.length() > 0) {
+                System.err.println("Command error output: " + errorOutput.toString());
+            }
+
+            System.out.println("Command executed with exit status: " + exitStatus);
+            return exitStatus == 0;
+
+        } catch (Exception e) {
+            System.err.println("Failed to execute remote command: " + e.getMessage());
+            e.printStackTrace();
+            return false;
+
+        } finally {
+            if (execChannel != null) {
+                try {
+                    execChannel.disconnect();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
         }
     }
 }
