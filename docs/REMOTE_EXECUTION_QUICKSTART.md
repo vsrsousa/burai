@@ -1,0 +1,196 @@
+# Remote SSH Job Execution - Quick Start Guide
+
+This guide shows you how to run Quantum ESPRESSO jobs on a remote server using SSH.
+
+## Step 1: Generate SSH Key (First Time Only)
+
+Open a terminal and generate an SSH key pair:
+
+```bash
+ssh-keygen -t ed25519 -C "your_email@example.com"
+```
+
+Press Enter to accept the default location (`~/.ssh/id_ed25519`).
+You can optionally set a passphrase for extra security (press Enter to skip).
+
+## Step 2: Copy Your Public Key to the Remote Server
+
+```bash
+ssh-copy-id username@remote-server.com
+```
+
+Replace `username` with your username and `remote-server.com` with your server's address.
+
+Test the connection:
+```bash
+ssh username@remote-server.com
+```
+
+If you can log in without entering a password, key authentication is working!
+
+## Step 3: Configure BURAI
+
+1. **Open Remote Configuration**
+   - Launch BURAI
+   - Go to: File → Remote Configuration (or similar menu option)
+
+2. **Create New Configuration**
+   - Click the **[+]** button
+   - Enter a name: "My HPC Server"
+   - Click **OK**
+
+3. **Configure SSH Settings** (in the SSH tab)
+   - **Host Name**: `remote-server.com`
+   - **Port**: `22` (default)
+   - **User Name**: `username`
+   - **Private Key**: Click the button and select `~/.ssh/id_ed25519`
+   - **Password**: Leave empty (we're using key authentication)
+
+4. **Configure Job Commands** (in the Command tab)
+   - **Post a Job**: `qsub ${JOB_SCRIPT}` (or `sbatch` for SLURM)
+   - **Job Script**: Modify the template for your cluster's requirements
+
+5. **Save**
+   - Click **Close** to save the configuration
+
+## Step 4: Run a Job
+
+1. **Open a Project**
+   - Create or open a Quantum ESPRESSO project in BURAI
+
+2. **Start Remote Run**
+   - Select **Run** from the project menu
+   - Choose your configured remote server
+   - Set MPI processes and OpenMP threads
+   - Click **OK**
+
+3. **Monitor Progress**
+   - Check the console output for upload and submission confirmation
+   - Files are uploaded and the job is submitted automatically
+
+## Example Job Script Templates
+
+### PBS/Torque
+```bash
+#!/bin/sh
+#PBS -q batch
+#PBS -l select=1:ncpus=${NCPU}:mpiprocs=${NMPI}:ompthreads=${NOMP}
+#PBS -l walltime=1:00:00
+#PBS -W group_list=mygroup
+
+if [ ! -z "${PBS_O_WORKDIR}" ]; then
+  cd ${PBS_O_WORKDIR}
+fi
+
+${QUANTUM_ESPRESSO_COMMAND}
+```
+
+### SLURM
+```bash
+#!/bin/bash
+#SBATCH --job-name=qe_job
+#SBATCH --ntasks=${NMPI}
+#SBATCH --cpus-per-task=${NOMP}
+#SBATCH --time=01:00:00
+#SBATCH --partition=normal
+
+${QUANTUM_ESPRESSO_COMMAND}
+```
+
+### Direct Execution (No Scheduler)
+```bash
+#!/bin/bash
+cd $HOME/calculations
+${QUANTUM_ESPRESSO_COMMAND}
+```
+
+## Troubleshooting
+
+### Cannot Connect
+- Verify hostname: `ping remote-server.com`
+- Test SSH manually: `ssh username@remote-server.com`
+- Check firewall settings
+
+### Private Key Not Working
+- Check file permissions: `chmod 600 ~/.ssh/id_ed25519`
+- Verify public key on server: `cat ~/.ssh/authorized_keys` (on remote)
+- Make sure you selected the **private** key, not the .pub file
+
+### Job Not Submitting
+- Log into the server and test the command manually
+- Check queue name: `qstat -Q` (PBS) or `sinfo` (SLURM)
+- Verify you have permission to submit jobs
+
+## What Gets Uploaded
+
+BURAI automatically uploads:
+- Input files (.in)
+- Pseudopotential files
+- Job submission script
+
+These files are uploaded to your home directory on the remote server.
+
+## What Happens Next
+
+After submission:
+1. Your job enters the queue on the remote server
+2. The job runs when resources are available
+3. Output files are created on the remote server
+4. You need to retrieve results manually (SFTP, scp, or rsync)
+
+## Retrieving Results
+
+To get your results back:
+
+### Using Command Line
+```bash
+# Download entire directory
+scp -r username@remote-server.com:~/project_name ./
+
+# Or use rsync
+rsync -avz username@remote-server.com:~/project_name ./
+```
+
+### Using SFTP GUI
+- FileZilla: sftp://remote-server.com
+- WinSCP (Windows)
+- Cyberduck (Mac)
+
+## Security Best Practices
+
+1. ✅ Use SSH keys instead of passwords
+2. ✅ Keep private keys secure (chmod 600)
+3. ✅ Use strong passphrases on keys (optional)
+4. ✅ Don't share private keys
+5. ⚠️ Be aware that host key verification is currently disabled
+
+## Need Help?
+
+See the full documentation:
+- User Guide: `docs/source/usage/project/remote_execution.rst`
+- Technical Details: `src/burai/ssh/README.md`
+
+## Quick Reference
+
+### Common Schedulers
+
+| System | Submit Command | Status Command | Cancel Command |
+|--------|---------------|----------------|----------------|
+| PBS    | qsub script   | qstat          | qdel jobid     |
+| SLURM  | sbatch script | squeue         | scancel jobid  |
+| SGE    | qsub script   | qstat          | qdel jobid     |
+
+### SSH Key Locations
+
+- Private key: `~/.ssh/id_ed25519` or `~/.ssh/id_rsa`
+- Public key: `~/.ssh/id_ed25519.pub` or `~/.ssh/id_rsa.pub`
+- Authorized keys (on server): `~/.ssh/authorized_keys`
+
+### File Permissions
+
+```bash
+chmod 700 ~/.ssh                    # SSH directory
+chmod 600 ~/.ssh/id_ed25519         # Private key
+chmod 644 ~/.ssh/id_ed25519.pub     # Public key
+chmod 600 ~/.ssh/authorized_keys    # On remote server
+```
