@@ -149,6 +149,12 @@ public class SSHJob {
                 return false;
             }
 
+            // Change to or create working directory if specified
+            if (!this.setupRemoteDirectory()) {
+                System.err.println("Failed to setup remote working directory");
+                return false;
+            }
+
             this.ftpFile(this.scriptFile);
 
             if (this.inpFiles != null) {
@@ -168,7 +174,14 @@ public class SSHJob {
             }
 
             // Execute the job script on the remote server
+            String workDir = this.sshServer.getWorkDirectory();
             String jobCommand = this.sshServer.getJobCommand(this.scriptFile.getName());
+            
+            // If work directory is specified, prepend cd command
+            if (workDir != null && !workDir.trim().isEmpty()) {
+                jobCommand = "cd " + workDir.trim() + " && " + jobCommand;
+            }
+            
             boolean jobSubmitted = this.executeRemoteCommand(jobCommand);
             
             if (!jobSubmitted) {
@@ -516,6 +529,68 @@ public class SSHJob {
 
         } catch (Exception e) {
             e.printStackTrace();
+        }
+    }
+
+    /**
+     * Sets up the remote working directory if specified.
+     * Creates the directory if it doesn't exist and changes to it.
+     * 
+     * @return true if setup is successful or no directory specified, false otherwise
+     */
+    private boolean setupRemoteDirectory() {
+        String workDir = this.sshServer.getWorkDirectory();
+        
+        // If no work directory specified, use current directory
+        if (workDir == null || workDir.trim().isEmpty()) {
+            System.out.println("No remote working directory specified, using home directory");
+            return true;
+        }
+
+        workDir = workDir.trim();
+
+        if (this.sftpChannel == null) {
+            System.err.println("SFTP channel is not connected");
+            return false;
+        }
+
+        try {
+            // Try to change to the directory
+            try {
+                this.sftpChannel.cd(workDir);
+                System.out.println("Changed to remote directory: " + workDir);
+                return true;
+            } catch (SftpException e) {
+                // Directory doesn't exist, try to create it
+                System.out.println("Directory doesn't exist, creating: " + workDir);
+                
+                // Create parent directories if needed
+                String[] dirs = workDir.split("/");
+                String currentPath = workDir.startsWith("/") ? "/" : "";
+                
+                for (String dir : dirs) {
+                    if (dir.isEmpty()) continue;
+                    
+                    currentPath += dir;
+                    try {
+                        this.sftpChannel.cd(currentPath);
+                    } catch (SftpException e2) {
+                        // Directory doesn't exist, create it
+                        this.sftpChannel.mkdir(currentPath);
+                        this.sftpChannel.cd(currentPath);
+                        System.out.println("Created directory: " + currentPath);
+                    }
+                    currentPath += "/";
+                }
+                
+                System.out.println("Successfully created and changed to: " + workDir);
+                return true;
+            }
+
+        } catch (SftpException e) {
+            System.err.println("Failed to setup remote working directory: " + e.getMessage());
+            e.printStackTrace();
+            return false;
         }
     }
 

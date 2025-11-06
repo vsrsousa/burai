@@ -25,6 +25,7 @@ public class SSHServer {
     private static final String WORD_NUM_CPUS = "NCPU";
     private static final String WORD_NUM_MPIS = "NMPI";
     private static final String WORD_NUM_OMPS = "NOMP";
+    private static final String WORD_MODULE_COMMANDS = "MODULE_COMMANDS";
 
     private static final int DEFAULT_PORT = 22;
 
@@ -39,6 +40,10 @@ public class SSHServer {
     private String password;
 
     private String keyPath;
+
+    private String workDirectory;
+
+    private String moduleCommands;
 
     private String jobCommand;
 
@@ -55,6 +60,8 @@ public class SSHServer {
         this.user = null;
         this.password = null;
         this.keyPath = null;
+        this.workDirectory = null;
+        this.moduleCommands = null;
         this.initializeJobCommand();
         this.initializeJobScript();
     }
@@ -114,6 +121,22 @@ public class SSHServer {
 
     public void setKeyPath(String keyPath) {
         this.keyPath = keyPath;
+    }
+
+    public String getWorkDirectory() {
+        return this.workDirectory;
+    }
+
+    public void setWorkDirectory(String workDirectory) {
+        this.workDirectory = workDirectory;
+    }
+
+    public String getModuleCommands() {
+        return this.moduleCommands;
+    }
+
+    public void setModuleCommands(String moduleCommands) {
+        this.moduleCommands = moduleCommands;
     }
 
     public String getJobCommand() {
@@ -177,6 +200,11 @@ public class SSHServer {
             jobScript_ = jobScript_.replaceAll("\\$\\{" + WORD_NUM_CPUS + "\\}", strCPU);
         }
 
+        String moduleCommands_ = this.moduleCommands == null ? "" : this.moduleCommands.trim();
+        jobScript_ = jobScript_.replaceAll("\\$" + WORD_MODULE_COMMANDS, moduleCommands_);
+        jobScript_ = jobScript_.replaceAll("\\$\\(" + WORD_MODULE_COMMANDS + "\\)", moduleCommands_);
+        jobScript_ = jobScript_.replaceAll("\\$\\{" + WORD_MODULE_COMMANDS + "\\}", moduleCommands_);
+
         return jobScript_;
     }
 
@@ -223,6 +251,12 @@ public class SSHServer {
         strBuilder.append("  cd ${PBS_O_WORKDIR}");
         strBuilder.append(System.lineSeparator());
         strBuilder.append("fi");
+        strBuilder.append(System.lineSeparator());
+        strBuilder.append(System.lineSeparator());
+
+        strBuilder.append("# Load required modules");
+        strBuilder.append(System.lineSeparator());
+        strBuilder.append("${" + WORD_MODULE_COMMANDS + "}");
         strBuilder.append(System.lineSeparator());
         strBuilder.append(System.lineSeparator());
 

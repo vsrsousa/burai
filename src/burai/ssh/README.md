@@ -17,6 +17,8 @@ Model class representing a remote SSH server configuration.
 - `user`: SSH username
 - `password`: Password for authentication (optional)
 - `keyPath`: Path to SSH private key file (optional)
+- `workDirectory`: Remote directory path for uploading files and running jobs (optional)
+- `moduleCommands`: Commands to load environment modules (optional)
 - `jobCommand`: Command template for job submission (e.g., "qsub ${JOB_SCRIPT}")
 - `jobScript`: Job script template with variable placeholders
 
@@ -25,6 +27,7 @@ Model class representing a remote SSH server configuration.
 - `${NCPU}` - Total CPUs (MPI × OpenMP)
 - `${NMPI}` - Number of MPI processes
 - `${NOMP}` - Number of OpenMP threads
+- `${MODULE_COMMANDS}` - Module load commands (if configured)
 - `${JOB_SCRIPT}` - Script filename (in jobCommand only)
 
 ### SSHServerList
@@ -46,9 +49,25 @@ Handles the actual SSH connection and remote job submission.
 Main entry point that orchestrates the complete workflow:
 1. Sets up local files (input files, pseudopotentials, job script)
 2. Establishes SSH connection
-3. Uploads all files via SFTP
-4. Executes job submission command
-5. Cleans up and disconnects
+3. Sets up remote working directory (creates if needed)
+4. Uploads all files via SFTP to working directory
+5. Executes job submission command (with cd to work directory if specified)
+6. Cleans up and disconnects
+
+#### `setupRemoteDirectory()`
+Sets up the remote working directory if configured.
+
+**Features:**
+- Changes to existing directory or creates it if it doesn't exist
+- Creates parent directories recursively if needed
+- Returns true if successful or if no directory configured
+
+**Example:**
+- If workDirectory is `/scratch/user/jobs`:
+  - Creates `/scratch` if needed
+  - Creates `/scratch/user` if needed  
+  - Creates `/scratch/user/jobs` if needed
+  - Changes to that directory for file uploads
 
 #### `connectSSH()`
 Establishes SSH connection using JSch library.

@@ -47,6 +47,8 @@ If you can log in without entering a password, key authentication is working!
    - **Password**: Leave empty (we're using key authentication)
 
 4. **Configure Job Commands** (in the Command tab)
+   - **Work Directory**: `/scratch/username/burai_jobs` (optional - remote path for job files)
+   - **Module Commands**: `module load quantum-espresso/6.8` (optional - modules to load)
    - **Post a Job**: `qsub ${JOB_SCRIPT}` (or `sbatch` for SLURM)
    - **Job Script**: Modify the template for your cluster's requirements
 
@@ -70,7 +72,7 @@ If you can log in without entering a password, key authentication is working!
 
 ## Example Job Script Templates
 
-### PBS/Torque
+### PBS/Torque (with modules)
 ```bash
 #!/bin/sh
 #PBS -q batch
@@ -82,10 +84,13 @@ if [ ! -z "${PBS_O_WORKDIR}" ]; then
   cd ${PBS_O_WORKDIR}
 fi
 
+# Load required modules
+${MODULE_COMMANDS}
+
 ${QUANTUM_ESPRESSO_COMMAND}
 ```
 
-### SLURM
+### SLURM (with modules)
 ```bash
 #!/bin/bash
 #SBATCH --job-name=qe_job
@@ -93,6 +98,9 @@ ${QUANTUM_ESPRESSO_COMMAND}
 #SBATCH --cpus-per-task=${NOMP}
 #SBATCH --time=01:00:00
 #SBATCH --partition=normal
+
+# Load required modules
+${MODULE_COMMANDS}
 
 ${QUANTUM_ESPRESSO_COMMAND}
 ```
@@ -103,6 +111,62 @@ ${QUANTUM_ESPRESSO_COMMAND}
 cd $HOME/calculations
 ${QUANTUM_ESPRESSO_COMMAND}
 ```
+
+## Working with Custom Directories and Modules
+
+### Remote Working Directory
+
+You can specify a custom directory on the remote server where files will be uploaded and jobs will run:
+
+1. In the **Command** tab, set **Work Directory** to your desired path
+   - Example: `/scratch/username/burai_jobs`
+   - Example: `/work/myproject/calculations`
+
+2. BURAI will:
+   - Create the directory if it doesn't exist (including parent directories)
+   - Upload all files to this directory
+   - Run the job submission command from this directory
+
+**Benefits:**
+- Keep jobs organized in scratch space
+- Avoid cluttering home directory
+- Use fast scratch filesystems
+- Easy cleanup after jobs complete
+
+### Module Loading
+
+Many HPC systems use environment modules to manage software. You can configure module commands:
+
+1. In the **Command** tab, set **Module Commands**
+   - Single module: `module load quantum-espresso/6.8`
+   - Multiple modules: `module load intel/2021.1; module load openmpi/4.1.0; module load quantum-espresso/6.8`
+
+2. These commands will be inserted into the job script before the Quantum ESPRESSO command
+
+**Common Examples:**
+```bash
+# Load single module
+module load quantum-espresso/7.0
+
+# Load compiler and QE
+module load intel/2021; module load quantum-espresso
+
+# Load with specific versions
+module load gcc/11.2.0; module load openmpi/4.1.1; module load qe/7.0
+
+# Purge and load
+module purge; module load quantum-espresso/latest
+```
+
+### Complete Example Configuration
+
+**Work Directory:** `/scratch/jsmith/qe_calculations`
+
+**Module Commands:** `module load intel/2021.4; module load openmpi/4.1.1; module load quantum-espresso/7.0`
+
+**Post a Job:** `sbatch ${JOB_SCRIPT}`
+
+**Result:** Files are uploaded to `/scratch/jsmith/qe_calculations`, modules are loaded in the job script, and the job is submitted via SLURM.
 
 ## Troubleshooting
 

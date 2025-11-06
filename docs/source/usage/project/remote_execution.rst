@@ -59,6 +59,8 @@ Still in the **SSH** tab, under the **Account** section:
 
 In the **Command** tab, configure how jobs are submitted:
 
+- **Work Directory**: (Optional) Specify a custom remote directory path where files should be uploaded and jobs executed (e.g., ``/scratch/username/burai_jobs``). If left empty, files are uploaded to the home directory.
+- **Module Commands**: (Optional) Commands to load environment modules before running Quantum ESPRESSO (e.g., ``module load quantum-espresso/7.0``). Multiple commands can be separated with semicolons.
 - **Post a Job**: The command template to submit jobs (e.g., ``qsub ${JOB_SCRIPT}``, ``sbatch ${JOB_SCRIPT}``)
 - **Job Script**: The job script template (modify according to your cluster's requirements)
 
@@ -169,8 +171,51 @@ The job script template supports variable substitution:
 +------------------------+----------------------------------------+
 | ``${NOMP}``            | Number of OpenMP threads               |
 +------------------------+----------------------------------------+
+| ``${MODULE_COMMANDS}`` | Module load commands (if configured)   |
++------------------------+----------------------------------------+
 
-Example job script for PBS/Torque:
+Remote Working Directory
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+You can specify a custom directory on the remote server where files will be uploaded:
+
+- In the **Command** tab, set **Work Directory** (e.g., ``/scratch/username/qe_jobs``)
+- BURAI will automatically create the directory if it doesn't exist
+- All input files, pseudopotentials, and job scripts are uploaded to this directory
+- The job submission command is executed from this directory
+
+**Benefits:**
+
+- Organize jobs in scratch space for better performance
+- Keep home directory clean
+- Easy cleanup after jobs complete
+- Utilize high-speed scratch filesystems
+
+**Example:** ``/scratch/jsmith/burai_calculations``
+
+Module Loading
+^^^^^^^^^^^^^^
+
+Many HPC clusters use environment modules to manage software packages. You can configure module commands:
+
+- In the **Command** tab, set **Module Commands**
+- These commands are inserted into the job script before the Quantum ESPRESSO command
+- Multiple commands can be separated with semicolons
+
+**Examples:**
+
+.. code-block:: bash
+
+   # Single module
+   module load quantum-espresso/7.0
+
+   # Multiple modules
+   module load intel/2021; module load openmpi/4.1; module load quantum-espresso/7.0
+
+   # With purge
+   module purge; module load quantum-espresso/latest
+
+Example job script for PBS/Torque (with modules):
 
 .. code-block:: bash
 
@@ -184,9 +229,12 @@ Example job script for PBS/Torque:
      cd ${PBS_O_WORKDIR}
    fi
 
+   # Load required modules
+   ${MODULE_COMMANDS}
+
    ${QUANTUM_ESPRESSO_COMMAND}
 
-Example job script for SLURM:
+Example job script for SLURM (with modules):
 
 .. code-block:: bash
 
@@ -196,6 +244,9 @@ Example job script for SLURM:
    #SBATCH --cpus-per-task=${NOMP}
    #SBATCH --time=01:00:00
    #SBATCH --partition=normal
+
+   # Load required modules
+   ${MODULE_COMMANDS}
 
    ${QUANTUM_ESPRESSO_COMMAND}
 

@@ -84,6 +84,12 @@ public class QEFXSSHDialog extends Dialog<ButtonType> implements Initializable {
     private Button keyButton;
 
     @FXML
+    private TextField workDirField;
+
+    @FXML
+    private TextField moduleField;
+
+    @FXML
     private TextField postField;
 
     @FXML
@@ -396,6 +402,24 @@ public class QEFXSSHDialog extends Dialog<ButtonType> implements Initializable {
         SSHServer sshServer = this.getSSHServer();
         this.updateCommandProperties(sshServer);
 
+        if (this.workDirField != null) {
+            this.workDirField.textProperty().addListener(o -> {
+                SSHServer sshServer_ = this.getSSHServer();
+                if (sshServer_ != null) {
+                    sshServer_.setWorkDirectory(this.getWorkDirectory());
+                }
+            });
+        }
+
+        if (this.moduleField != null) {
+            this.moduleField.textProperty().addListener(o -> {
+                SSHServer sshServer_ = this.getSSHServer();
+                if (sshServer_ != null) {
+                    sshServer_.setModuleCommands(this.getModuleCommands());
+                }
+            });
+        }
+
         if (this.postField != null) {
             this.postField.textProperty().addListener(o -> {
                 SSHServer sshServer_ = this.getSSHServer();
@@ -416,6 +440,18 @@ public class QEFXSSHDialog extends Dialog<ButtonType> implements Initializable {
     }
 
     private void updateCommandProperties(SSHServer sshServer) {
+        if (this.workDirField != null) {
+            String workDir = sshServer == null ? null : sshServer.getWorkDirectory();
+            this.workDirField.setText(workDir == null ? "" : workDir.trim());
+            this.workDirField.setDisable(sshServer == null);
+        }
+
+        if (this.moduleField != null) {
+            String moduleCommands = sshServer == null ? null : sshServer.getModuleCommands();
+            this.moduleField.setText(moduleCommands == null ? "" : moduleCommands.trim());
+            this.moduleField.setDisable(sshServer == null);
+        }
+
         if (this.postField != null) {
             String postCommand = sshServer == null ? null : sshServer.getJobCommand();
             this.postField.setText(postCommand == null ? "" : postCommand.trim());
@@ -475,6 +511,24 @@ public class QEFXSSHDialog extends Dialog<ButtonType> implements Initializable {
             value = null;
         }
 
+        return value == null ? null : value.trim();
+    }
+
+    private String getWorkDirectory() {
+        if (this.workDirField == null) {
+            return null;
+        }
+
+        String value = this.workDirField.getText();
+        return value == null ? null : value.trim();
+    }
+
+    private String getModuleCommands() {
+        if (this.moduleField == null) {
+            return null;
+        }
+
+        String value = this.moduleField.getText();
         return value == null ? null : value.trim();
     }
 
