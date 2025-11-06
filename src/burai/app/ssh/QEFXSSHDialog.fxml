@@ -200,12 +200,24 @@
                         </BorderPane>
                         <GridPane hgap="5.0" prefWidth="445.0" vgap="5.0">
                            <children>
-                              <Label text="Post a Job">
+                              <Label text="Work Directory">
                                  <padding>
                                     <Insets left="35.0" />
                                  </padding>
                               </Label>
-                              <TextField fx:id="postField" prefWidth="290.0" style="-fx-font-family: monospace;" GridPane.columnIndex="1" />
+                              <Label text="Module Commands" GridPane.rowIndex="1">
+                                 <padding>
+                                    <Insets left="35.0" />
+                                 </padding>
+                              </Label>
+                              <Label text="Post a Job" GridPane.rowIndex="2">
+                                 <padding>
+                                    <Insets left="35.0" />
+                                 </padding>
+                              </Label>
+                              <TextField fx:id="workDirField" prefWidth="290.0" style="-fx-font-family: monospace;" GridPane.columnIndex="1" />
+                              <TextField fx:id="moduleField" prefWidth="290.0" style="-fx-font-family: monospace;" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+                              <TextField fx:id="postField" prefWidth="290.0" style="-fx-font-family: monospace;" GridPane.columnIndex="1" GridPane.rowIndex="2" />
                            </children>
                            <columnConstraints>
                               <ColumnConstraints hgrow="SOMETIMES" prefWidth="120.0" />
@@ -215,6 +227,8 @@
                               <Insets left="10.0" right="20.0" />
                            </padding>
                            <rowConstraints>
+                              <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                              <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
                               <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
                            </rowConstraints>
                         </GridPane>
