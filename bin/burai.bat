@@ -8,7 +8,8 @@ REM Get the directory where this script is located
 set SCRIPT_DIR=%~dp0
 
 REM Default JavaFX library path
-REM You may need to adjust this path based on your JavaFX installation
+REM Adjust this based on your JavaFX installation location
+REM Download JavaFX from https://openjfx.io/ if not already installed
 if "%JAVAFX_LIB_PATH%"=="" set JAVAFX_LIB_PATH=C:\javafx-sdk\lib
 
 REM Check if JavaFX libraries exist
@@ -16,11 +17,14 @@ if not exist "%JAVAFX_LIB_PATH%" (
     echo Error: JavaFX libraries not found at %JAVAFX_LIB_PATH%
     echo.
     echo Please download JavaFX SDK from https://openjfx.io/
-    echo Extract it and set JAVAFX_LIB_PATH environment variable:
-    echo   set JAVAFX_LIB_PATH=C:\path\to\javafx\lib
-    echo   burai.bat
+    echo Extract it to a location like C:\javafx-sdk\
     echo.
-    echo Or edit this batch file and update the JAVAFX_LIB_PATH variable.
+    echo Then either:
+    echo   1. Set JAVAFX_LIB_PATH environment variable before running:
+    echo      set JAVAFX_LIB_PATH=C:\path\to\javafx\lib
+    echo      burai.bat
+    echo.
+    echo   2. Or edit this batch file (burai.bat) and update the JAVAFX_LIB_PATH variable.
     exit /b 1
 )
 
