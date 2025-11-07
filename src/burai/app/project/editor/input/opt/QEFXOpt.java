@@ -34,7 +34,7 @@ public class QEFXOpt extends QEFXEditorComponent<QEFXOptController> {
 
     @Override
     public void notifyEditorOpened() {
-        // TODO 自動生成されたメソ�?ド�?�スタ�?
+        // TODO Auto-generated method stub
     }
 
 }

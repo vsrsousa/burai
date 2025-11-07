@@ -30,7 +30,7 @@ public class QEFXHubbard extends QEFXEditorComponent<QEFXHubbardController> {
 
     @Override
     public void notifyEditorOpened() {
-        // TODO 自動生成されたメソ�?ド�?�スタ�?
+        // TODO Auto-generated method stub
     }
 
 }
