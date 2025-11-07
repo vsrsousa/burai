@@ -44,14 +44,14 @@
             <zipfileset excludes="META-INF/*.SF" src="${lib.dir}/jcodec-0.2.0.jar"/>
             <zipfileset excludes="META-INF/*.SF" src="${lib.dir}/jcodec-javase-0.2.0.jar"/>
             <zipfileset excludes="META-INF/*.SF" src="${lib.dir}/jsch-0.1.54.jar"/>
-            <!-- Include JavaFX libraries -->
-            <zipfileset excludes="META-INF/*.SF" src="${path.to.fx}/javafx.base.jar"/>
-            <zipfileset excludes="META-INF/*.SF" src="${path.to.fx}/javafx.controls.jar"/>
-            <zipfileset excludes="META-INF/*.SF" src="${path.to.fx}/javafx.fxml.jar"/>
-            <zipfileset excludes="META-INF/*.SF" src="${path.to.fx}/javafx.graphics.jar"/>
-            <zipfileset excludes="META-INF/*.SF" src="${path.to.fx}/javafx.media.jar"/>
-            <zipfileset excludes="META-INF/*.SF" src="${path.to.fx}/javafx.swing.jar"/>
-            <zipfileset excludes="META-INF/*.SF" src="${path.to.fx}/javafx.web.jar"/>
+            <!-- Include JavaFX libraries, excluding module-info.class to avoid conflicts -->
+            <zipfileset excludes="META-INF/*.SF,module-info.class" src="${path.to.fx}/javafx.base.jar"/>
+            <zipfileset excludes="META-INF/*.SF,module-info.class" src="${path.to.fx}/javafx.controls.jar"/>
+            <zipfileset excludes="META-INF/*.SF,module-info.class" src="${path.to.fx}/javafx.fxml.jar"/>
+            <zipfileset excludes="META-INF/*.SF,module-info.class" src="${path.to.fx}/javafx.graphics.jar"/>
+            <zipfileset excludes="META-INF/*.SF,module-info.class" src="${path.to.fx}/javafx.media.jar"/>
+            <zipfileset excludes="META-INF/*.SF,module-info.class" src="${path.to.fx}/javafx.swing.jar"/>
+            <zipfileset excludes="META-INF/*.SF,module-info.class" src="${path.to.fx}/javafx.web.jar"/>
         </jar>
     </target>
 </project>

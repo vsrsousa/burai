@@ -194,7 +194,7 @@ public class QEAtomicSpecies extends QECard {
         }
 
         this.labels.add(label);
-        this.masses.add(new Double(mass));
+        this.masses.add(Double.valueOf(mass));
         this.pseudopots.add(pseudopot2);
 
         if (this.listeners != null) {
