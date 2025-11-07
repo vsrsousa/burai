@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="burai-compile-test" default="compile" basedir="..">
+    <property name="src.dir" value="src"/>
+    <property name="build.dir" value="class"/>
+    <property name="lib.dir" value="lib"/>
+
+    <path id="classpath">
+        <fileset dir="${lib.dir}">
+            <include name="**/*.jar"/>
+        </fileset>
+    </path>
+
+    <target name="compile" description="Compile Java source files">
+        <mkdir dir="${build.dir}"/>
+        <javac srcdir="${src.dir}" 
+               destdir="${build.dir}" 
+               encoding="UTF-8"
+               includeantruntime="false"
+               source="1.8"
+               target="1.8"
+               debug="on"
+               failonerror="false">
+            <classpath refid="classpath"/>
+        </javac>
+    </target>
+
+    <target name="clean" description="Clean build directory">
+        <delete dir="${build.dir}"/>
+    </target>
+</project>

@@ -34,7 +34,7 @@ public class QEFXTddft extends QEFXEditorComponent<QEFXTddftController> {
 
     @Override
     public void notifyEditorOpened() {
-        // TODO 自動生成されたメソ�?ド�?�スタ�?
+        // TODO Auto-generated method stub
     }
 
 }

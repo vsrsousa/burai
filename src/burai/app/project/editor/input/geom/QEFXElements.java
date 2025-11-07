@@ -31,7 +31,7 @@ public class QEFXElements extends QEFXEditorComponent<QEFXElementsController> {
 
     @Override
     public void notifyEditorOpened() {
-        // TODO 自動生成されたメソ�?ド�?�スタ�?
+        // TODO Auto-generated method stub
     }
 
 }

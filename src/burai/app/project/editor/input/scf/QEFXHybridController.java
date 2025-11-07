@@ -27,12 +27,12 @@ public class QEFXHybridController extends QEFXInputController {
 
     public QEFXHybridController(QEFXMainController mainController, QEInput input) {
         super(mainController, input);
-        // TODO 自動生成されたコンストラクター・スタ�?
+        // TODO Auto-generated constructor stub
     }
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
-        // TODO 自動生成されたメソ�?ド�?�スタ�?
+        // TODO Auto-generated method stub
 
     }
 

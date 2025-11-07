@@ -809,7 +809,7 @@ public enum RunningType {
 
                 if (klabel != null && !(klabel.isEmpty())) {
                     if (klabel.equalsIgnoreCase("gG")) {
-                        klabel = "�?";
+                        klabel = "Γ";
                     } else if (klabel.equalsIgnoreCase("gS")) {
                         klabel = "Σ";
                     } else if (klabel.equalsIgnoreCase("gS1")) {
