@@ -32,7 +32,23 @@
          If you installed via `sudo apt install openjfx`, use /usr/share/openjfx/lib -->
     <property name="path.to.fx" value="/usr/share/openjfx/lib"/>
     
-    <target name="create_run_jar">
+    <target name="check-javafx">
+        <condition property="javafx.available">
+            <available file="${path.to.fx}/javafx.base.jar"/>
+        </condition>
+    </target>
+    
+    <target name="create_run_jar" depends="check-javafx">
+        <fail unless="javafx.available">
+            
+    ERROR: JavaFX libraries not found at ${path.to.fx}
+    
+    Please install OpenJFX:
+      Ubuntu/Debian: sudo apt install openjfx
+      
+    Or set the path.to.fx property to your JavaFX installation:
+      ant -Dpath.to.fx=/path/to/javafx/lib -f bin/build.xml
+        </fail>
         <jar destfile="${dir.jarfile}/burai.jar" filesetmanifest="mergewithoutmain">
             <manifest>
                 <attribute name="Main-Class" value="burai.app.QEFXMain"/>

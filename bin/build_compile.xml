@@ -56,7 +56,23 @@
         <delete dir="${build.dir}"/>
     </target>
 
-    <target name="jar" depends="compile" description="Create executable JAR file">
+    <target name="check-javafx">
+        <condition property="javafx.available">
+            <available file="${path.to.fx}/javafx.base.jar"/>
+        </condition>
+    </target>
+
+    <target name="jar" depends="compile,check-javafx" description="Create executable JAR file">
+        <fail unless="javafx.available">
+            
+    ERROR: JavaFX libraries not found at ${path.to.fx}
+    
+    Please install OpenJFX:
+      Ubuntu/Debian: sudo apt install openjfx
+      
+    Or set the path.to.fx property to your JavaFX installation:
+      ant -Dpath.to.fx=/path/to/javafx/lib -f bin/build_compile.xml build
+        </fail>
         <jar destfile="bin/burai.jar" filesetmanifest="mergewithoutmain">
             <manifest>
                 <attribute name="Main-Class" value="burai.app.QEFXMain"/>
