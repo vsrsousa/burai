@@ -4,9 +4,11 @@ This document explains how to build BURAI from source.
 
 ## Prerequisites
 
-- JDK 1.8 or later
+- JDK 1.8 or later (the build produces Java 1.8 compatible bytecode)
 - Apache Ant 1.7 or later
 - JavaFX libraries (OpenJFX)
+
+**Note:** While newer JDK versions can be used to compile, the build targets Java 1.8 compatibility (`-source 1.8 -target 1.8`).
 
 ### Installing JavaFX on Ubuntu/Debian
 
