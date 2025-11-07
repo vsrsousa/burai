@@ -1,0 +1,31 @@
+#!/bin/bash
+# BURAI Launcher Script
+#
+# This script launches BURAI with the necessary JavaFX configuration.
+# For Java 11+, JavaFX requires explicit module path configuration.
+
+# Get the directory where this script is located
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# Default JavaFX library path (for systems with openjfx installed via apt)
+JAVAFX_LIB_PATH="${JAVAFX_LIB_PATH:-/usr/share/openjfx/lib}"
+
+# Check if JavaFX libraries exist at the default location
+if [ ! -d "$JAVAFX_LIB_PATH" ]; then
+    echo "Error: JavaFX libraries not found at $JAVAFX_LIB_PATH"
+    echo ""
+    echo "Please install OpenJFX:"
+    echo "  Ubuntu/Debian: sudo apt install openjfx"
+    echo ""
+    echo "Or set JAVAFX_LIB_PATH environment variable to your JavaFX installation:"
+    echo "  export JAVAFX_LIB_PATH=/path/to/javafx/lib"
+    echo "  $0"
+    exit 1
+fi
+
+# Launch BURAI with JavaFX modules
+exec java \
+    --module-path "$JAVAFX_LIB_PATH" \
+    --add-modules javafx.controls,javafx.fxml,javafx.web,javafx.media,javafx.swing \
+    -jar "$SCRIPT_DIR/burai.jar" \
+    "$@"

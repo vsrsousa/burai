@@ -28,6 +28,10 @@
     <property name="class.dir" value="class"/>
     <property name="lib.dir" value="lib"/>
     
+    <!-- Path to JavaFX libs. Adjust if you installed JavaFX in another location.
+         If you installed via `sudo apt install openjfx`, use /usr/share/openjfx/lib -->
+    <property name="path.to.fx" value="/usr/share/openjfx/lib"/>
+    
     <target name="create_run_jar">
         <jar destfile="${dir.jarfile}/burai.jar" filesetmanifest="mergewithoutmain">
             <manifest>
@@ -40,6 +44,14 @@
             <zipfileset excludes="META-INF/*.SF" src="${lib.dir}/jcodec-0.2.0.jar"/>
             <zipfileset excludes="META-INF/*.SF" src="${lib.dir}/jcodec-javase-0.2.0.jar"/>
             <zipfileset excludes="META-INF/*.SF" src="${lib.dir}/jsch-0.1.54.jar"/>
+            <!-- Include JavaFX libraries -->
+            <zipfileset excludes="META-INF/*.SF" src="${path.to.fx}/javafx.base.jar"/>
+            <zipfileset excludes="META-INF/*.SF" src="${path.to.fx}/javafx.controls.jar"/>
+            <zipfileset excludes="META-INF/*.SF" src="${path.to.fx}/javafx.fxml.jar"/>
+            <zipfileset excludes="META-INF/*.SF" src="${path.to.fx}/javafx.graphics.jar"/>
+            <zipfileset excludes="META-INF/*.SF" src="${path.to.fx}/javafx.media.jar"/>
+            <zipfileset excludes="META-INF/*.SF" src="${path.to.fx}/javafx.swing.jar"/>
+            <zipfileset excludes="META-INF/*.SF" src="${path.to.fx}/javafx.web.jar"/>
         </jar>
     </target>
 </project>

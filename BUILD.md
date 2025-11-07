@@ -65,15 +65,39 @@ Both scripts create an executable JAR file:
 
 - **Location:** `bin/burai.jar`
 - **Main class:** `burai.app.QEFXMain`
-- **Dependencies:** All required libraries are bundled into the JAR
+- **Dependencies:** All required libraries (including JavaFX) are bundled into the JAR
 
 ## Running BURAI
 
-After building, you can run BURAI with:
+BURAI is a JavaFX application. For Java 11 and later, JavaFX requires explicit module configuration at runtime.
+
+### Using the Launcher Scripts (Recommended)
+
+The easiest way to run BURAI is to use the provided launcher scripts:
+
+**Linux/Mac:**
+```bash
+bin/burai
+```
+
+**Windows:**
+```cmd
+bin\burai.bat
+```
+
+These scripts automatically configure the JavaFX module path and launch BURAI.
+
+### Manual Launch
+
+If you prefer to run the JAR directly, use:
 
 ```bash
-java -jar bin/burai.jar
+java --module-path /usr/share/openjfx/lib \
+     --add-modules javafx.controls,javafx.fxml,javafx.web,javafx.media,javafx.swing \
+     -jar bin/burai.jar
 ```
+
+**Note:** On Windows, adjust the module path to your JavaFX installation location (e.g., `C:\javafx-sdk\lib`).
 
 ## Quick Start
 
@@ -81,14 +105,37 @@ For first-time builds, use:
 
 ```bash
 ant -f bin/build_compile.xml build
-java -jar bin/burai.jar
+bin/burai
 ```
 
 ## Troubleshooting
 
+### "Could not find or load main class" or "NoClassDefFoundError: javafx/application/Application"
+
+This error occurs when trying to run BURAI with `java -jar bin/burai.jar` on Java 11+.
+
+**Solution:** Use the launcher scripts (`bin/burai` or `bin/burai.bat`) or run with JavaFX module arguments:
+
+```bash
+java --module-path /usr/share/openjfx/lib \
+     --add-modules javafx.controls,javafx.fxml,javafx.web,javafx.media,javafx.swing \
+     -jar bin/burai.jar
+```
+
+### "JavaFX runtime components are missing"
+
+This error means JavaFX is not installed on your system.
+
+**Solution:** Install OpenJFX:
+```bash
+sudo apt install openjfx  # Ubuntu/Debian
+```
+
+For Windows, download JavaFX SDK from https://openjfx.io/ and set `JAVAFX_LIB_PATH` environment variable.
+
 ### "package javafx.scene.control does not exist"
 
-This error means JavaFX libraries are not found. Make sure:
+This error means JavaFX libraries are not found during compilation. Make sure:
 
 1. OpenJFX is installed: `sudo apt install openjfx`
 2. The `path.to.fx` property in `bin/build_compile.xml` points to the correct location
