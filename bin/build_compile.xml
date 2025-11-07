@@ -1,4 +1,20 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!-- BURAI Build Script
+     
+     This is the main build script for the BURAI project.
+     
+     Purpose:
+       - Compile Java source files from src/ to class/
+       - Create executable JAR file (burai.jar) in bin/
+     
+     Usage:
+       ant -f bin/build_compile.xml compile  # Compile source files only
+       ant -f bin/build_compile.xml jar      # Create JAR (requires compilation first)
+       ant -f bin/build_compile.xml build    # Compile and create JAR (recommended)
+       ant -f bin/build_compile.xml clean    # Clean build directory
+     
+     Note: This file has been updated to use relative paths and work on any platform.
+-->
 <project name="burai-compile-test" default="compile" basedir="..">
     <!-- repo root contains src/, lib/, class/ -->
     <property name="src.dir" value="src"/>
@@ -39,4 +55,21 @@
     <target name="clean" description="Clean build directory">
         <delete dir="${build.dir}"/>
     </target>
+
+    <target name="jar" depends="compile" description="Create executable JAR file">
+        <jar destfile="bin/burai.jar" filesetmanifest="mergewithoutmain">
+            <manifest>
+                <attribute name="Main-Class" value="burai.app.QEFXMain"/>
+                <attribute name="Class-Path" value="."/>
+            </manifest>
+            <fileset dir="${build.dir}"/>
+            <zipfileset excludes="META-INF/*.SF" src="${lib.dir}/exp4j-0.4.6.jar"/>
+            <zipfileset excludes="META-INF/*.SF" src="${lib.dir}/gson-2.6.1.jar"/>
+            <zipfileset excludes="META-INF/*.SF" src="${lib.dir}/jcodec-0.2.0.jar"/>
+            <zipfileset excludes="META-INF/*.SF" src="${lib.dir}/jcodec-javase-0.2.0.jar"/>
+            <zipfileset excludes="META-INF/*.SF" src="${lib.dir}/jsch-0.1.54.jar"/>
+        </jar>
+    </target>
+
+    <target name="build" depends="compile,jar" description="Compile and create JAR"/>
 </project>
