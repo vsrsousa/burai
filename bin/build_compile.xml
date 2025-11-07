@@ -1,25 +1,37 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project name="burai-compile-test" default="compile" basedir="..">
+    <!-- repo root contains src/, lib/, class/ -->
     <property name="src.dir" value="src"/>
     <property name="build.dir" value="class"/>
     <property name="lib.dir" value="lib"/>
+
+    <!-- Path to JavaFX libs. Adjust if you installed JavaFX in another location.
+         If you installed via `sudo apt install openjfx`, use /usr/share/openjfx/lib -->
+    <property name="path.to.fx" value="/usr/share/openjfx/lib"/>
+
+    <!-- Source encoding for .java files. The source files use UTF-8 encoding.
+         DO NOT change this to MS932 or other encodings as it will cause
+         "unmappable character" errors for Greek letters (Γ, Σ, etc.) in the code. -->
+    <property name="source.encoding" value="UTF-8"/>
 
     <path id="classpath">
         <fileset dir="${lib.dir}">
             <include name="**/*.jar"/>
         </fileset>
+        <!-- include JavaFX jars from the OpenJFX installation -->
+        <fileset dir="${path.to.fx}" includes="*.jar" erroronmissingdir="false"/>
     </path>
 
     <target name="compile" description="Compile Java source files">
         <mkdir dir="${build.dir}"/>
-        <javac srcdir="${src.dir}" 
-               destdir="${build.dir}" 
-               encoding="UTF-8"
+        <javac srcdir="${src.dir}"
+               destdir="${build.dir}"
+               encoding="${source.encoding}"
                includeantruntime="false"
                source="1.8"
                target="1.8"
                debug="on"
-               failonerror="false">
+               failonerror="true">
             <classpath refid="classpath"/>
         </javac>
     </target>
